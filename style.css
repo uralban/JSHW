@@ -1,3 +1,11 @@
 .form-wrapper{
     min-height: 100%;
 }
+
+.alert-wrapper {
+    display: none;
+}
+
+.edit-btn {
+    display: none;
+}
