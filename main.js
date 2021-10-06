@@ -12,14 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function render(){
         let drivers = getDriversFromStorage();
+
         if (drivers.length) {
             let tBodyContent = '';
             for (driver of drivers) {
                 tBodyContent += `
                     <tr>
                         <td>${driver.id}</td>
-                        <td>${driver.fName}</td>
-                        <td>${driver.lName}</td>
+                        <td>${driver.fName} ${driver.lName}</td>
                         <td>${driver.email}</td>
                         <td>${driver.city}</td>
                         <td>
@@ -36,19 +36,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveData(driver){
-        let drivers = getDriversFromStorage();                
+        let drivers = getDriversFromStorage();            
+
         driver.id = (drivers.length > 0) ? drivers[drivers.length-1].id + 1 : 0;        
         drivers.push(driver);
         localStorage.setItem('drivers', JSON.stringify(drivers));
     }      
 
     function editData(driver){
-        let drivers = getDriversFromStorage(); 
+        let drivers = getDriversFromStorage();
+        let index = findDriver(drivers, Number(editBtn.dataset.id), 'index');
 
-        let index = findDriver(drivers, editBtn.dataset.id, 'index');
-
-        console.log(index);
-
+        driver.id = drivers[index].id;
+        drivers.splice(index, 1, driver);
+        localStorage.setItem('drivers', JSON.stringify(drivers));
     }
 
     function findDriver (drivers, id, type='data') {
@@ -70,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function removeData(id) {
         let drivers = getDriversFromStorage();
         let deleteItem = findDriver(drivers, id, 'index');
+
         if (deleteItem !== -1){
             drivers.splice(deleteItem,1);
             localStorage.setItem('drivers', JSON.stringify(drivers));
@@ -79,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateFormData(id){
         let drivers = getDriversFromStorage();
         let currentDriver = findDriver(drivers, id);
-        console.log(currentDriver);
+        
         document.newDriverForm.firstName.value = currentDriver.fName;
         document.newDriverForm.lastName.value = currentDriver.lName;
         document.newDriverForm.email.value = currentDriver.email;
@@ -124,6 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
             (edit) ? editData(driver) : saveData(driver);
 
             document.newDriverForm.reset();
+            editBtn.classList.add('d-none');
+            cancelBtn.classList.add('d-none');
+            submitBtn.classList.remove('d-none');
 
             render();
         }
@@ -136,11 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     editBtn.addEventListener('click', () => {        
         checkAndSave(document.newDriverForm, true);
-
     });
 
     cancelBtn.addEventListener('click', () => {
         document.newDriverForm.reset();
+        alertWrapper.style.display = 'none';
+        alertWrapper.innerHTML = '';
         editBtn.classList.toggle('d-none');
         cancelBtn.classList.toggle('d-none');
         submitBtn.classList.toggle('d-none');
@@ -159,8 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
     });
-
-
 
     render();
 });
