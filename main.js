@@ -10,12 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return JSON.parse(localStorage.getItem('drivers')) || [];
     }
 
+    function saveDriversToStorage(drivers){
+        localStorage.setItem('drivers', JSON.stringify(drivers));
+    }
+
     function render(){
         let drivers = getDriversFromStorage();
 
         if (drivers.length) {
             let tBodyContent = '';
-            for (driver of drivers) {
+            for (let driver of drivers) {
                 tBodyContent += `
                     <tr>
                         <td>${driver.id}</td>
@@ -23,25 +27,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${driver.email}</td>
                         <td>${driver.city}</td>
                         <td>
-                            <button class="btn btn-info"  data-id="${driver.id}">E</button>
+                            <button class="btn btn-info" data-id="${driver.id}">E</button>
                             <button class="btn btn-danger" data-id="${driver.id}"><i class="bi bi-dash" data-id="${driver.id}"></i></button>
                         </td>
                     </tr>
-                `;            
+                `;
             }
             tBody.innerHTML = tBodyContent;
         } else {
             tBody.innerHTML = '';
-        }  
+        }
     }
 
     function saveData(driver){
-        let drivers = getDriversFromStorage();            
+        let drivers = getDriversFromStorage();
 
-        driver.id = (drivers.length > 0) ? drivers[drivers.length-1].id + 1 : 0;        
+        driver.id = (drivers.length > 0) ? drivers[drivers.length-1].id + 1 : 0;
         drivers.push(driver);
-        localStorage.setItem('drivers', JSON.stringify(drivers));
-    }      
+
+        saveDriversToStorage(drivers);
+    }
 
     function editData(driver){
         let drivers = getDriversFromStorage();
@@ -49,39 +54,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         driver.id = drivers[index].id;
         drivers.splice(index, 1, driver);
-        localStorage.setItem('drivers', JSON.stringify(drivers));
+
+        saveDriversToStorage(drivers);
     }
 
-    function findDriver (drivers, id, type='data') {
-        if (type === 'data'){
-            return drivers.find((driver) => {
-                if(driver.id === id){
-                    return driver;
-                }
-            });
-        } else if (type === 'index') {
-            return drivers.findIndex((driver) => {
-                if(driver.id === id){
-                    return driver;
-                }
-            });
+    function findDriver (drivers, id, type) {
+        switch (type) {
+            case 'index': {
+                return drivers.findIndex((driver) => {
+                    if(driver.id === id){
+                        return driver;
+                    }
+                });
+            }
+            default: {
+                return drivers.find((driver) => {
+                    if(driver.id === id){
+                        return driver;
+                    }
+                });
+            }
         }
     }
 
     function removeData(id) {
         let drivers = getDriversFromStorage();
-        let deleteItem = findDriver(drivers, id, 'index');
+        let deleteItemIndex = findDriver(drivers, id, 'index');
 
-        if (deleteItem !== -1){
-            drivers.splice(deleteItem,1);
+        if (deleteItemIndex !== -1){
+            drivers.splice(deleteItemIndex,1);
             localStorage.setItem('drivers', JSON.stringify(drivers));
+        } else {
+            console.error('ERROR, this driver id there is not in storage');
         }
     }
 
     function updateFormData(id){
         let drivers = getDriversFromStorage();
         let currentDriver = findDriver(drivers, id);
-        
+
         document.newDriverForm.firstName.value = currentDriver.fName;
         document.newDriverForm.lastName.value = currentDriver.lName;
         document.newDriverForm.email.value = currentDriver.email;
@@ -105,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (errors.length) {
             let errorContent = '';
             alertWrapper.style.display = 'block';
-            for (error of errors) {
+            for (let error of errors) {
                 errorContent += `
                     <p>${error}</p>
                 `;
@@ -139,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkAndSave(e.target);
     });
 
-    editBtn.addEventListener('click', () => {        
+    editBtn.addEventListener('click', () => {
         checkAndSave(document.newDriverForm, true);
     });
 
