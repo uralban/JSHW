@@ -1,151 +1,140 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const newDriverForm = document.querySelector('.new-driver-form');
-    const tBody = document.querySelector('.tbody');
     const alertWrapper = document.querySelector('.alert-wrapper');
     const editBtn = document.querySelector('.edit-btn');
     const cancelBtn = document.querySelector('.cancel-btn');
     const submitBtn = document.querySelector('.submit-btn');
+    const contentDiv = document.querySelector('.content');
+    const LOCALSTORAGE_KEY_DRIVERS_LIST = 'drivers';
 
     function getDriversFromStorage (){
-        return JSON.parse(localStorage.getItem('drivers')) || [];
+        return JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY_DRIVERS_LIST)) || [];
     }
 
-    function saveDriversToStorage(drivers){
-        localStorage.setItem('drivers', JSON.stringify(drivers));
+    function addDriversToStorage(drivers){
+        localStorage.setItem(LOCALSTORAGE_KEY_DRIVERS_LIST, JSON.stringify(drivers));
     }
 
-    function render(){
-        let drivers = getDriversFromStorage();
+    function renderTable(){
+        const drivers = getDriversFromStorage();
 
         if (drivers.length) {
             let tBodyContent = '';
-            for (let driver of drivers) {
-                tBodyContent += `
-                    <tr>
-                        <td>${driver.id}</td>
-                        <td>${driver.fName} ${driver.lName}</td>
-                        <td>${driver.email}</td>
-                        <td>${driver.city}</td>
-                        <td>
-                            <button class="btn btn-info" data-id="${driver.id}">E</button>
-                            <button class="btn btn-danger" data-id="${driver.id}"><i class="bi bi-dash" data-id="${driver.id}"></i></button>
-                        </td>
-                    </tr>
-                `;
+            for (const driver of drivers) {
+              tBodyContent += `
+                      <div class="row">
+                        <div class="col-1 pt-1 pb-1">${driver.id}</div>
+                        <div class="col-4 pt-1 pb-1">${driver.firstName} ${driver.lastName}</div>
+                        <div class="col-3 pt-1 pb-1">${driver.email}</div>
+                        <div class="col-2 pt-1 pb-1">${driver.city}</div>
+                        <div class="col-2 pt-1 pb-1">
+                            <button class="btn btn-info" data-type="edit">E</button>
+                            <button class="btn btn-danger" data-type="remove">-</button>
+                        </div>
+                      </div>
+              `;
             }
-            tBody.innerHTML = tBodyContent;
+          contentDiv.innerHTML = tBodyContent;
         } else {
-            tBody.innerHTML = '';
+          contentDiv.innerHTML = '';
         }
     }
 
-    function saveData(driver){
-        let drivers = getDriversFromStorage();
+    function addData(driver){
+        const drivers = getDriversFromStorage();
 
         driver.id = (drivers.length > 0) ? drivers[drivers.length-1].id + 1 : 0;
         drivers.push(driver);
 
-        saveDriversToStorage(drivers);
+        addDriversToStorage(drivers);
     }
 
     function editData(driver){
-        let drivers = getDriversFromStorage();
-        let index = findDriver(drivers, Number(editBtn.dataset.id), 'index');
+        const drivers = getDriversFromStorage();
+        const index = findDriverIndex(drivers, Number(editBtn.dataset.id));
 
         driver.id = drivers[index].id;
         drivers.splice(index, 1, driver);
 
-        saveDriversToStorage(drivers);
+        addDriversToStorage(drivers);
     }
 
-    function findDriver (drivers, id, type) {
-        switch (type) {
-            case 'index': {
-                return drivers.findIndex((driver) => {
-                    if(driver.id === id){
-                        return driver;
-                    }
-                });
-            }
-            default: {
-                return drivers.find((driver) => {
-                    if(driver.id === id){
-                        return driver;
-                    }
-                });
-            }
-        }
+    function findDriverIndex (drivers, id) {
+        return drivers.findIndex(driver => driver.id === id);
+    }
+
+    function findDriver (drivers, id) {
+        return drivers.find(driver => driver.id === id);
     }
 
     function removeData(id) {
-        let drivers = getDriversFromStorage();
-        let deleteItemIndex = findDriver(drivers, id, 'index');
+        const drivers = getDriversFromStorage();
+        const deleteItemIndex = findDriverIndex(drivers, id);
 
         if (deleteItemIndex !== -1){
             drivers.splice(deleteItemIndex,1);
-            localStorage.setItem('drivers', JSON.stringify(drivers));
+            addDriversToStorage(drivers);
         } else {
             console.error('ERROR, this driver id there is not in storage');
         }
     }
 
-    function updateFormData(id){
-        let drivers = getDriversFromStorage();
-        let currentDriver = findDriver(drivers, id);
+    function updateFormData (id){
+        const drivers = getDriversFromStorage();
+        const currentDriver = findDriver(drivers, id);
 
-        document.newDriverForm.firstName.value = currentDriver.fName;
-        document.newDriverForm.lastName.value = currentDriver.lName;
+        document.newDriverForm.firstName.value = currentDriver.firstName;
+        document.newDriverForm.lastName.value = currentDriver.lastName;
         document.newDriverForm.email.value = currentDriver.email;
         document.newDriverForm.city.value = currentDriver.city;
     }
 
-    function validForm(form) {
-        let errors = [];
+    function validateForm(form) {
+        const errors = [];
 
-        (form.firstName.value.length > 0) ? '' : errors.push('First name too short');
-        (form.lastName.value.length > 0) ? '' : errors.push('Last name too short');
-        (form.email.value.length > 0) ? '' : errors.push('Email too short');
-        (form.city.value.length > 0) ? '' : errors.push('City name too short');
-
-        return errors;
-    }
-
-    function checkAndSave(form, edit=false){
-        let errors = validForm(form);
+        if (!form.firstName.value.length) errors.push('First name too short');
+        if (!form.lastName.value.length) errors.push('Last name too short');
+        if (!form.email.value.length) errors.push('Email too short');
+        if (!form.city.value.length) errors.push('City name too short');
 
         if (errors.length) {
-            let errorContent = '';
-            alertWrapper.style.display = 'block';
-            for (let error of errors) {
-                errorContent += `
-                    <p>${error}</p>
-                `;
-            }
-            alertWrapper.innerHTML = errorContent;
-
+          let errorContent = '';
+          alertWrapper.classList.remove('d-none');
+          for (const error of errors) {
+            errorContent += `
+                      <p>${error}</p>
+                  `;
+          }
+          alertWrapper.innerHTML = errorContent;
+          return false;
         } else {
-            let driver = {};
-
-            alertWrapper.style.display = 'none';
-            alertWrapper.innerHTML = '';
-
-            driver.fName = form.firstName.value;
-            driver.lName = form.lastName.value;
-            driver.email = form.email.value;
-            driver.city = form.city.value;
-
-            (edit) ? editData(driver) : saveData(driver);
-
-            document.newDriverForm.reset();
-            editBtn.classList.add('d-none');
-            cancelBtn.classList.add('d-none');
-            submitBtn.classList.remove('d-none');
-
-            render();
+          alertWrapper.classList.add('d-none');
+          alertWrapper.innerHTML = '';
+          return true;
         }
     }
 
-    newDriverForm.addEventListener('submit', (e) => {
+    function checkAndSave(form, edit=false){
+
+        if (!validateForm(form)) return;
+
+        const driver = {};
+
+        driver.firstName = form.firstName.value;
+        driver.lastName = form.lastName.value;
+        driver.email = form.email.value;
+        driver.city = form.city.value;
+
+        (edit) ? editData(driver) : addData(driver);
+
+        document.newDriverForm.reset();
+        editBtn.classList.add('d-none');
+        cancelBtn.classList.add('d-none');
+        submitBtn.classList.remove('d-none');
+
+        renderTable();
+    }
+
+    document.newDriverForm.addEventListener('submit', (e) => {
         e.preventDefault();
         checkAndSave(e.target);
     });
@@ -158,24 +147,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.newDriverForm.reset();
         alertWrapper.style.display = 'none';
         alertWrapper.innerHTML = '';
-        editBtn.classList.toggle('d-none');
-        cancelBtn.classList.toggle('d-none');
-        submitBtn.classList.toggle('d-none');
+        editBtn.classList.add('d-none');
+        cancelBtn.classList.add('d-none');
+        submitBtn.classList.remove('d-none');
     });
 
-    tBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-danger') || e.target.classList.contains('bi-dash')){
-            removeData(Number(e.target.dataset.id));
-            render();
-        } else if (e.target.classList.contains('btn-info')){
-            updateFormData(Number(e.target.dataset.id));
-            editBtn.dataset.id = e.target.dataset.id;
+  contentDiv.addEventListener('click', (e) => {
+        if (e.target.dataset.type === 'remove'){
+            removeData(Number(e.target.parentNode.parentNode.firstElementChild.innerText));
+            renderTable();
+        } else if (e.target.dataset.type === 'edit'){
+            updateFormData(Number(e.target.parentNode.parentNode.firstElementChild.innerText));
+            editBtn.dataset.id = e.target.parentNode.parentNode.firstElementChild.innerText;
             editBtn.classList.remove('d-none');
             cancelBtn.classList.remove('d-none');
             submitBtn.classList.add('d-none');
         }
 
-    });
+    },true);
 
-    render();
+    renderTable();
 });
