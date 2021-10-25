@@ -63,9 +63,8 @@ export class FormComponent {
       if (!this.form.firstName.value.length) errors.push('First name too short');
       if (!this.form.lastName.value.length) errors.push('Last name too short');
       if (!this.form.email.value.length) errors.push('Email too short');
-      if (!this.form.loginName.value.length) errors.push('Login too short');
+      if (!this.form.city.value.length) errors.push('City too short');
       if (!this.validateEmail(this.form.email.value)) errors.push('Email is incorrect');
-      if (!this.validateEmail(this.form.loginName.value)) errors.push('Login is incorrect');
 
       if (errors.length) {
         let errorContent = '';
@@ -94,17 +93,11 @@ export class FormComponent {
       }
       this.driver = {};
 
-      this.driver.firstName = this.form.firstName.value;
-      this.driver.lastName = this.form.lastName.value;
+      this.driver.fullName = this.form.firstName.value + '&' + this.form.lastName.value;
       this.driver.email = this.form.email.value;
-      this.driver.loginName = this.form.loginName.value;
-      this.driver.status = this.form.status.checked ? 'active' : 'passive';
+      this.driver.city = this.form.city.value;
 
-      this.driver.id = !edit ?
-        this.drivers.length > 0 ?
-          this.drivers[this.drivers.length - 1].id + 1 :
-          0 :
-        this.editBtn.dataset.id;
+      if (edit) this.driver._id = this.editBtn.dataset.id;
 
       try {
         edit ?

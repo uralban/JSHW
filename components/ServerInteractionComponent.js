@@ -1,7 +1,5 @@
 import {SERVER_URL} from "../shared/const.js";
 
-import ky from '../shared/ky.js';
-
 export class ServerInteractionComponent {
 
   constructor() {
@@ -10,46 +8,55 @@ export class ServerInteractionComponent {
 
   async readDataFromServer(){
     try {
-      const resp = await ky.get(SERVER_URL);
+      const resp = await fetch(SERVER_URL, {
+        method: "GET"
+      });
       return await resp.json();
     } catch (e) {
-      console.error('ky: get data', e);
+      console.error('fetch: get data', e);
     }
   }
 
   async addDataToServer(driver){
-    driver.fullName = driver.firstName + ' ' + driver.lastName;
-    console.log('add data...', driver.id);
+    console.log('add data...');
 
     try {
-      await ky.post(SERVER_URL, {
-        json: driver
+      await fetch(SERVER_URL, {
+        method: "POST",
+        body: JSON.stringify(driver),
+        headers: { "Content-Type": "application/json" }
       });
     } catch (e) {
-      console.error('ky: add data', e);
+      console.error('fetch: add data', e);
     }
   }
-
   async removeDataFromServer(id){
     console.log('remove data...', id);
 
     try {
-      await ky.delete(SERVER_URL + id);
+      await fetch(SERVER_URL + '/' + id, {
+        method: "DELETE"
+      });
     } catch (e) {
-      console.error('ky: delete data', e);
+      console.error('fetch: delete data', e);
     }
   }
 
   async updateDataFromServer(driver){
-    driver.fullName = driver.firstName + ' ' + driver.lastName;
-    console.log('update data...', driver.id);
+    console.log('update data...', driver._id);
+    const id = driver._id;
+    delete driver._id;
 
     try {
-      await ky.patch(SERVER_URL + '/' + driver.id, {
-        json: driver
-      });
+      await fetch(SERVER_URL + '/' + id, {
+        method: "PUT",
+        body: JSON.stringify(driver),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     } catch (e) {
-      console.error('ky: update data', e);
+      console.error('fetch: update data', e);
     }
   }
 }

@@ -72,7 +72,7 @@ export class FilterComponent {
     }
     if (this.form.idFilter.value.length > 0) {
       this.filterArr = this.filterArr.filter(element => {
-        if (String(element.id).toLowerCase().indexOf(this.form.idFilter.value) !== -1) return true;
+        if (String(element._id).toLowerCase().indexOf(this.form.idFilter.value) !== -1) return true;
       });
     }
     if (this.form.nameFilter.value.length > 2) {

@@ -30,10 +30,10 @@ export class ListComponent {
       const driverRow = document.createElement('div');
       driverRow.classList.add('row');
       driverRow.innerHTML = `
-      <div class="col-1 pt-1 pb-1">${element.id}</div>
-      <div class="col-3 pt-1 pb-1">${element.fullName}</div>
-      <div class="col-3 pt-1 pb-1">${element.email}</div>
-      <div class="col-3 pt-1 pb-1">${element.loginName}</div>
+      <div class="col-4 pt-1 pb-1">${element._id}</div>
+      <div class="col-2 pt-1 pb-1">${element.fullName.replace('&', ' ')}</div>
+      <div class="col-2 pt-1 pb-1">${element.email}</div>
+      <div class="col-2 pt-1 pb-1">${element.city}</div>
       <div class="col-2 pt-1 pb-1">
           <button class="btn btn-info" data-type="edit">E</button>
           <button class="btn btn-danger" data-type="remove">-</button>
@@ -48,7 +48,7 @@ export class ListComponent {
     this.contentWrapper.addEventListener('click', async e => {
       if (e.target.dataset.type === 'remove') {
         try {
-          await this.ServerInteractionComponent.removeDataFromServer(Number(e.target.parentNode.parentNode.firstElementChild.innerText));
+          await this.ServerInteractionComponent.removeDataFromServer(String(e.target.parentNode.parentNode.firstElementChild.innerText));
         } catch (e) {
           console.error('remove data', e);
         }
@@ -59,19 +59,18 @@ export class ListComponent {
           console.error('get data error');
         }
       } else if (e.target.dataset.type === 'edit') {
-        this.updateFormData(Number(e.target.parentNode.parentNode.firstElementChild.innerText));
+        this.updateFormData(String(e.target.parentNode.parentNode.firstElementChild.innerText));
       }
     });
   }
 
   updateFormData (id){
     const currentDriver = this.findDriver(this.drivers, id);
-
-    this.form.firstName.value = currentDriver.firstName;
-    this.form.lastName.value = currentDriver.lastName;
+    const driverName = currentDriver.fullName.split('&');
+    this.form.firstName.value = driverName[0];
+    this.form.lastName.value = driverName[1];
     this.form.email.value = currentDriver.email;
-    this.form.loginName.value = currentDriver.loginName;
-    this.form.status.checked = (currentDriver.status === 'active');
+    this.form.city.value = currentDriver.city;
 
     this.editBtn.dataset.id = id;
     this.editBtn.classList.remove('d-none');
@@ -82,6 +81,6 @@ export class ListComponent {
   }
 
   findDriver (drivers, id) {
-    return drivers.find(driver => driver.id === id);
+    return drivers.find(driver => driver._id === id);
   }
 }
