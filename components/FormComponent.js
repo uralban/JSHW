@@ -21,7 +21,7 @@ export class FormComponent {
       this.clearBtn = clearBtn;
       this.ServerInteractionComponent = ServerInteractionComp;
       this.ListComponent = ListComp;
-      this.driversStr = '';
+      this.driversArr = [];
 
       this.addEvents();
     }
@@ -58,19 +58,19 @@ export class FormComponent {
     }
 
     validateForm() {
-      this.errors = [];
+      let errors = [];
 
-      if (!this.form.firstName.value.length) this.errors.push('First name too short');
-      if (!this.form.lastName.value.length) this.errors.push('Last name too short');
-      if (!this.form.email.value.length) this.errors.push('Email too short');
-      if (!this.form.loginName.value.length) this.errors.push('Login too short');
-      if (!this.validateEmail(this.form.email.value)) this.errors.push('Email is incorrect');
-      if (!this.validateEmail(this.form.loginName.value)) this.errors.push('Login is incorrect');
+      if (!this.form.firstName.value.length) errors.push('First name too short');
+      if (!this.form.lastName.value.length) errors.push('Last name too short');
+      if (!this.form.email.value.length) errors.push('Email too short');
+      if (!this.form.loginName.value.length) errors.push('Login too short');
+      if (!this.validateEmail(this.form.email.value)) errors.push('Email is incorrect');
+      if (!this.validateEmail(this.form.loginName.value)) errors.push('Login is incorrect');
 
-      if (this.errors.length) {
+      if (errors.length) {
         let errorContent = '';
         this.alertWrapper.classList.remove('d-none');
-        for (const error of this.errors) {
+        for (const error of errors) {
           errorContent += `
                         <p>${error}</p>
                     `;
@@ -88,7 +88,7 @@ export class FormComponent {
       if (!this.validateForm()) return;
 
       try {
-        this.drivers = JSON.parse(await this.ServerInteractionComponent.readDataFromServer());
+        this.drivers = await this.ServerInteractionComponent.readDataFromServer();
       } catch (e) {
         console.error('read data', e);
       }
@@ -100,9 +100,9 @@ export class FormComponent {
       this.driver.loginName = this.form.loginName.value;
       this.driver.status = this.form.status.checked ? 'active' : 'passive';
 
-      this.driver.driverId = !edit ?
+      this.driver.id = !edit ?
         this.drivers.length > 0 ?
-          this.drivers[this.drivers.length - 1].driverId + 1 :
+          this.drivers[this.drivers.length - 1].id + 1 :
           0 :
         this.editBtn.dataset.id;
 
@@ -122,8 +122,8 @@ export class FormComponent {
       this.clearBtn.classList.add('d-none');
 
       try {
-        this.driversStr = await this.ServerInteractionComponent.readDataFromServer();
-        this.ListComponent.renderDriversList(this.driversStr);
+        this.driversArr = await this.ServerInteractionComponent.readDataFromServer();
+        this.ListComponent.renderDriversList(this.driversArr);
       } catch (e) {
         console.error('get data error');
       }

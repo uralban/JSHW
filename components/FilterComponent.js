@@ -10,7 +10,7 @@ export class FilterComponent {
       this.clearBtn = clearBtn;
       this.ServerInteractionComponent = ServerInteractionComp;
       this.ListComponent = ListComp;
-      this.filterStr = '';
+      this.filterArr = [];
 
       this.addEvents();
   }
@@ -53,11 +53,11 @@ export class FilterComponent {
       this.form.reset();
       try {
         try {
-          this.filterStr = await this.getActualData();
+          this.filterArr = await this.getActualData();
         } catch (e) {
           console.error('get actual data', e)
         }
-        this.ListComponent.renderDriversList(this.filterStr);
+        this.ListComponent.renderDriversList(this.filterArr);
       } catch (e) {
         console.error('get data', e);
       }
@@ -66,28 +66,26 @@ export class FilterComponent {
 
   async updateFilter() {
     try {
-      this.filterStr = await this.getActualData();
+      this.filterArr = await this.getActualData();
     } catch (e) {
       console.error('get actual data', e);
     }
-    let filterContent = JSON.parse(this.filterStr);
     if (this.form.idFilter.value.length > 0) {
-      filterContent = filterContent.filter(element => {
-        if (String(element.driverId).toLowerCase().indexOf(this.form.idFilter.value) !== -1) return true;
+      this.filterArr = this.filterArr.filter(element => {
+        if (String(element.id).toLowerCase().indexOf(this.form.idFilter.value) !== -1) return true;
       });
     }
     if (this.form.nameFilter.value.length > 2) {
-      filterContent = filterContent.filter(element => {
+      this.filterArr = this.filterArr.filter(element => {
         if (String(element.fullName).toLowerCase().indexOf(this.form.nameFilter.value) !== -1) return true;
       });
     }
     if (this.form.emailFilter.value.length > 2) {
-      filterContent = filterContent.filter(element => {
+      this.filterArr = this.filterArr.filter(element => {
         if (String(element.email).toLowerCase().indexOf(this.form.emailFilter.value) !== -1) return true;
       });
     }
-    this.filterStr = JSON.stringify(filterContent);
-    this.ListComponent.renderDriversList(this.filterStr);
+    this.ListComponent.renderDriversList(this.filterArr);
   }
 
   async getActualData(){

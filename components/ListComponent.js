@@ -17,7 +17,6 @@ export class ListComponent {
     this.submitBtn = submitBtn;
     this.ServerInteractionComponent = ServerInteractionComp;
     this.drivers = [];
-    this.driversStr = '';
 
     this.addEvents();
   }
@@ -25,13 +24,13 @@ export class ListComponent {
   renderDriversList(listDrivers) {
     this.contentWrapper.innerHTML = '';
     console.log('render list');
-    this.drivers = JSON.parse(listDrivers);
+    this.drivers = listDrivers;
 
     const driverTmplArr = this.drivers.map(element => {
       const driverRow = document.createElement('div');
       driverRow.classList.add('row');
       driverRow.innerHTML = `
-      <div class="col-1 pt-1 pb-1">${element.driverId}</div>
+      <div class="col-1 pt-1 pb-1">${element.id}</div>
       <div class="col-3 pt-1 pb-1">${element.fullName}</div>
       <div class="col-3 pt-1 pb-1">${element.email}</div>
       <div class="col-3 pt-1 pb-1">${element.loginName}</div>
@@ -54,8 +53,8 @@ export class ListComponent {
           console.error('remove data', e);
         }
         try {
-          this.driversStr = await this.ServerInteractionComponent.readDataFromServer();
-          this.renderDriversList(this.driversStr);
+          this.drivers = await this.ServerInteractionComponent.readDataFromServer();
+          this.renderDriversList(this.drivers);
         } catch (e) {
           console.error('get data error');
         }
@@ -83,6 +82,6 @@ export class ListComponent {
   }
 
   findDriver (drivers, id) {
-    return drivers.find(driver => driver.driverId === id);
+    return drivers.find(driver => driver.id === id);
   }
 }
