@@ -1,27 +1,32 @@
+import {dataService, serverInteractionComponent} from "../main.js";
+
 export class FormComponent {
 
     constructor(
-      newDriverForm,
-      contentWrapper,
-      editBtn,
-      cancelBtn,
-      submitBtn,
-      alertWrapper,
       filterForm,
-      clearBtn,
-      ListComp,
-      ServerInteractionComp
+      clearBtn
     ) {
-      this.form = newDriverForm;
+      this.form = document.newDriverForm;
       this.filterForm = filterForm;
-      this.alertWrapper = alertWrapper;
-      this.editBtn = editBtn;
-      this.cancelBtn = cancelBtn;
-      this.submitBtn = submitBtn;
+      this.alertWrapper = document.querySelector('.alert-wrapper');
+      this.editBtn = document.querySelector('.edit-btn');
+      this.cancelBtn = document.querySelector('.cancel-btn');
+      this.submitBtn = document.querySelector('.submit-btn');
       this.clearBtn = clearBtn;
-      this.ServerInteractionComponent = ServerInteractionComp;
-      this.ListComponent = ListComp;
       this.driversArr = [];
+
+      dataService.editDriver.subscribe(driver => {
+        this.form.firstName.value = driver.firstName;
+        this.form.lastName.value = driver.lastName;
+        this.form.email.value = driver.email;
+        this.form.loginName.value = driver.loginName;
+        this.form.status.checked = (driver.status === 'active');
+        this.editBtn.dataset.id = driver.driverId;
+
+        this.editBtn.classList.remove('d-none');
+        this.cancelBtn.classList.remove('d-none');
+        this.submitBtn.classList.add('d-none');
+      });
 
       this.addEvents();
     }
@@ -29,11 +34,7 @@ export class FormComponent {
     addEvents(){
       this.form.addEventListener('submit', async e => {
         e.preventDefault();
-        try {
-          await this.checkAndSave();
-        } catch (e) {
-          console.error('check and save', e);
-        }
+        this.checkAndSave();
       });
       this.cancelBtn.addEventListener('click', () => {
         this.form.reset();
@@ -43,12 +44,13 @@ export class FormComponent {
         this.alertWrapper.classList.add('d-none');
         this.alertWrapper.innerHTML = '';
       });
-      this.editBtn.addEventListener('click', async () => {
-        try {
-          await this.checkAndSave(true);
-        } catch (e) {
-          console.error('check and save', e);
-        }
+      this.editBtn.addEventListener('click', () => {
+        this.checkAndSave(true);
+        // try {
+        //   await this.checkAndSave(true);
+        // } catch (e) {
+        //   console.error('check and save', e);
+        // }
       });
     }
 
@@ -62,9 +64,8 @@ export class FormComponent {
 
       if (!this.form.firstName.value.length) errors.push('First name too short');
       if (!this.form.lastName.value.length) errors.push('Last name too short');
-      if (!this.form.email.value.length) errors.push('Email too short');
-      if (!this.form.city.value.length) errors.push('City too short');
       if (!this.validateEmail(this.form.email.value)) errors.push('Email is incorrect');
+      if (!this.validateEmail(this.form.loginName.value)) errors.push('Login Name is incorrect');
 
       if (errors.length) {
         let errorContent = '';
@@ -83,43 +84,42 @@ export class FormComponent {
       }
     }
 
-    async checkAndSave(edit = false) {
+    checkAndSave(edit = false) {
       if (!this.validateForm()) return;
 
-      try {
-        this.drivers = await this.ServerInteractionComponent.readDataFromServer();
-      } catch (e) {
-        console.error('read data', e);
-      }
-      this.driver = {};
+      const drivers = JSON.parse(serverInteractionComponent.readDataFromServer());
 
-      this.driver.fullName = this.form.firstName.value + '&' + this.form.lastName.value;
-      this.driver.email = this.form.email.value;
-      this.driver.city = this.form.city.value;
+      const driver = {};
+      driver.firstName = this.form.firstName.value;
+      driver.lastName = this.form.lastName.value;
+      driver.fullName = this.form.firstName.value + ' ' + this.form.lastName.value;
+      driver.email = this.form.email.value;
+      driver.loginName = this.form.loginName.value;
+      driver.status = (this.form.status.checked) ? 'active' : 'passive';
 
-      if (edit) this.driver._id = this.editBtn.dataset.id;
+      driver.driverId = drivers[drivers.length - 1].driverId + 1;
+      if (edit) driver.driverId = Number(this.editBtn.dataset.id);
 
-      try {
-        edit ?
-          await this.ServerInteractionComponent.updateDataFromServer(this.driver) :
-          await this.ServerInteractionComponent.addDataToServer(this.driver);
-      } catch (e) {
-        console.error('write to server', e);
-      }
+      (edit) ? drivers.map(element => {
+        if (element.driverId === driver.driverId) {
+          element.firstName = driver.firstName;
+          element.lastName = driver.lastName;
+          element.fullName = driver.fullName;
+          element.email = driver.email;
+          element.loginName = driver.loginName;
+          element.status = driver.status;
+        }
+        return element;
+      }) : drivers.push(driver);
+
+      const newData = JSON.stringify(drivers);
+      serverInteractionComponent.updateDataFromServer(newData);
+      dataService.driverlist.broadcast(newData);
 
       this.form.reset();
       this.editBtn.classList.add('d-none');
       this.cancelBtn.classList.add('d-none');
       this.submitBtn.classList.remove('d-none');
-      this.filterForm.reset();
-      this.clearBtn.classList.add('d-none');
-
-      try {
-        this.driversArr = await this.ServerInteractionComponent.readDataFromServer();
-        this.ListComponent.renderDriversList(this.driversArr);
-      } catch (e) {
-        console.error('get data error');
-      }
     }
 }
 
